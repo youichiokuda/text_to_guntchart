@@ -9,7 +9,8 @@
 - `.txt` ファイルをアップロードするだけでOK（フォルダパス不要）
 - 日本語の自然文をChatGPTで解析し、JSON形式で期間付きタスクに変換
 - `matplotlib` で日本語対応のガントチャートを描画
-- Dockerでローカル環境構築も可能（日本語フォントを自動インストール）
+- **日本語フォントはシステムにあるOSSフォントを自動使用**
+- Dockerでローカル環境構築も可能
 
 ---
 
@@ -17,9 +18,9 @@
 
 ```
 guntchartmake_app/
-├── app.py               # Streamlit アプリ本体（アップロード式）
+├── app.py               # Streamlit アプリ本体
 ├── requirements.txt     # Pythonライブラリ
-├── Dockerfile           # 日本語フォントありDocker構成
+├── Dockerfile           # 日本語フォントありDocker構成（Takao + IPA + Noto）
 └── sample_task.txt      # （任意）アップロード用テキストサンプル
 ```
 
@@ -27,12 +28,12 @@ guntchartmake_app/
 
 ## 🚀 実行方法
 
-### 🔸 1. OpenAI APIキーの取得
+### 1. OpenAI APIキーの取得
 
 - https://platform.openai.com/account/api-keys から新規作成
 - `sk-...` で始まるキーをアプリ画面の入力欄に貼り付け
 
-### 🔸 2. Dockerでローカル実行（推奨）
+### 2. Dockerでローカル実行（推奨）
 
 ```bash
 docker build -t gantt-chart-app .
@@ -60,18 +61,19 @@ docker run -p 8501:8501 gantt-chart-app
 ## 📈 出力
 
 - 📋 タスク一覧（表形式）
-- 📅 ガントチャート（日本語ラベル表示OK）
+- 📅 ガントチャート（日本語対応、時系列上→下、X軸上部）
 
 ---
 
 ## 🔤 日本語フォントについて（Docker）
 
-このアプリはDocker内で以下の日本語フォントを自動インストールします：
+このアプリはDocker内で以下のフォントをインストールして使用します：
 
 - `fonts-takao`
 - `fonts-ipafont-gothic`
+- `fonts-noto-cjk`
 
-さらに `app.py` 側で `TakaoPGothic.ttf` を明示指定しており、`matplotlib` での日本語文字化けを防止しています。
+また、`app.py` ではこれらのフォントの存在を確認し、自動的に `matplotlib` に適用しています。
 
 ---
 
