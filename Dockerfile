@@ -10,14 +10,14 @@ RUN apt-get update && apt-get install -y \
 # 作業ディレクトリの設定
 WORKDIR /app
 
-# プロジェクトファイルを全てコピー
+# プロジェクトファイルをコピー
 COPY . /app
 
 # Pythonライブラリのインストール
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Streamlit用ポート
+# Streamlit が使用するポートを公開
 EXPOSE 8501
 
-# アプリ起動コマンド
+# アプリを起動
 CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
