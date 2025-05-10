@@ -9,7 +9,7 @@ import matplotlib.font_manager as fm
 import os
 import re
 
-# ✅ Takaoフォントを明示的に指定（Docker用）
+# ✅ 日本語フォントの明示指定（Docker環境用）
 font_path = "/usr/share/fonts/truetype/takao-gothic/TakaoPGothic.ttf"
 if os.path.exists(font_path):
     font_prop = fm.FontProperties(fname=font_path)
@@ -17,13 +17,15 @@ if os.path.exists(font_path):
 else:
     plt.rcParams["font.family"] = "sans-serif"
 
+# JSONらしさ判定
 def is_json_like(text):
     return bool(re.match(r'^[\s]*[\[{]', text.strip()))
 
+# OpenAIでタスク抽出
 def extract_tasks_from_text(text, api_key):
     client = OpenAI(api_key=api_key)
     prompt = f"""
-以下のテキストからプロジェクトのタスクと期間（開始日・終了日）を抽出し、以下のJSON形式で返してください：
+以下のテキストからプロジェクトのタスクとその期間（開始日・終了日）を抽出し、以下のJSON形式で返してください：
 
 [
   {{"task": "ネットワーク設計", "start": "2025-06-01", "end": "2025-06-15"}}
@@ -43,6 +45,7 @@ def extract_tasks_from_text(text, api_key):
     )
     return response.choices[0].message.content.strip()
 
+# JSONをDataFrameに変換
 def json_to_df(json_text):
     if not json_text.strip() or not is_json_like(json_text):
         st.error("❌ ChatGPTが有効なJSONを返しませんでした。以下をご確認ください：")
@@ -59,7 +62,9 @@ def json_to_df(json_text):
         st.code(json_text)
         raise e
 
-def plot_gantt(df):
+# ガントチャート描画
+def plot_gantt(df, title):
+    df = df.sort_values("start")  # 古い順にソート
     fig, ax = plt.subplots(figsize=(12, 6))
     for i, row in df.iterrows():
         ax.barh(row['task'], (row['end'] - row['start']).days, left=row['start'], height=0.5)
@@ -67,7 +72,7 @@ def plot_gantt(df):
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
     plt.xticks(rotation=45)
     ax.grid(True, axis='x', linestyle='--', alpha=0.5)
-    plt.title("自然文から生成されたガントチャート")
+    ax.set_title(title)
     plt.tight_layout()
     st.pyplot(fig)
 
@@ -84,6 +89,9 @@ if uploaded_file and api_key:
         st.subheader("📄 アップロード内容")
         st.text(text[:1000] + ("..." if len(text) > 1000 else ""))
 
+        # ✅ ガントチャートタイトル入力
+        chart_title = st.text_input("📌 ガントチャートのタイトル", value="自然文から生成されたガントチャート")
+
         if st.button("🚀 ChatGPTで解析してガントチャート生成"):
             with st.spinner("ChatGPTで解析中..."):
                 json_text = extract_tasks_from_text(text, api_key)
@@ -95,7 +103,7 @@ if uploaded_file and api_key:
                 st.dataframe(df)
 
                 st.subheader("📈 ガントチャート")
-                plot_gantt(df)
+                plot_gantt(df, chart_title)
 
     except Exception as e:
         st.error(f"❌ エラーが発生しました: {e}")
