@@ -9,8 +9,8 @@ import matplotlib.font_manager as fm
 import os
 import re
 
-# ✅ 同フォルダ内のフォントファイルを明示指定
-font_path = os.path.join(os.path.dirname(__file__), "NotoSerifJP-Bold.ttf")
+# ✅ フォントを相対パスで指定（同じディレクトリにある前提）
+font_path = "NotoSerifJP-Bold.ttf"
 if os.path.exists(font_path):
     font_prop = fm.FontProperties(fname=font_path)
     plt.rcParams["font.family"] = font_prop.get_name()
@@ -60,7 +60,7 @@ def json_to_df(json_text):
         raise e
 
 def plot_gantt(df, title):
-    df = df.sort_values("start")  # 古い順に並び替え
+    df = df.sort_values("start")
     fig, ax = plt.subplots(figsize=(12, 6))
     for i, row in df.iterrows():
         ax.barh(row['task'], (row['end'] - row['start']).days, left=row['start'], height=0.5)
