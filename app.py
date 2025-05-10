@@ -6,27 +6,40 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.font_manager as fm
+import os
 import re
 
-# ✅ 日本語フォントの設定（クラウドでもできるだけ対応）
-plt.rcParams["font.family"] = "sans-serif"
-plt.rcParams["font.sans-serif"] = ["Noto Sans CJK JP", "IPAexGothic", "Arial Unicode MS", "sans-serif"]
+# ✅ 日本語フォント設定（自動検出）
+font_candidates = [
+    "/usr/share/fonts/truetype/takao-gothic/TakaoPGothic.ttf",
+    "/usr/share/fonts/opentype/ipafont-gothic/ipagp.ttf",
+    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+    "/System/Library/Fonts/ヒラギノ角ゴ ProN W3.ttc",  # macOS
+    "/usr/share/fonts/truetype/fonts-japanese-gothic.ttf"
+]
+for font_path in font_candidates:
+    if os.path.exists(font_path):
+        fm.fontManager.addfont(font_path)
+        plt.rcParams["font.family"] = fm.FontProperties(fname=font_path).get_name()
+        break
+else:
+    plt.rcParams["font.family"] = "sans-serif"
 
-# JSON形式チェック
+# JSON形式らしさの確認
 def is_json_like(text):
-    return bool(re.match(r'^\s*[\[{]', text.strip()))
+    return bool(re.match(r'^[\s]*[\[{]', text.strip()))
 
-# ChatGPT API 呼び出し
+# ChatGPT API呼び出し
 def extract_tasks_from_text(text, api_key):
     client = OpenAI(api_key=api_key)
     prompt = f"""
-以下のテキストからプロジェクトのタスクとその期間（開始日・終了日）を抽出してください。
-出力は以下のような JSON 形式で返してください（説明不要）：
+以下のテキストからプロジェクトのタスクと期間（開始日・終了日）を抽出し、以下のJSON形式で返してください：
 
 [
-  {{"task": "ネットワーク設計", "start": "2025-06-01", "end": "2025-06-15"}},
-  ...
+  {{"task": "ネットワーク設計", "start": "2025-06-01", "end": "2025-06-15"}}
 ]
+
+説明やテンプレート形式は不要です。
 
 テキスト:
 {text}
@@ -40,7 +53,7 @@ def extract_tasks_from_text(text, api_key):
     )
     return response.choices[0].message.content.strip()
 
-# JSON→DataFrame変換
+# JSON → DataFrame
 def json_to_df(json_text):
     if not json_text.strip() or not is_json_like(json_text):
         st.error("❌ ChatGPTが有効なJSONを返しませんでした。以下をご確認ください：")
@@ -53,7 +66,7 @@ def json_to_df(json_text):
         df['end'] = pd.to_datetime(df['end'], format="%Y-%m-%d")
         return df
     except Exception as e:
-        st.error("❌ JSONまたは日付変換に失敗しました。以下をご確認ください：")
+        st.error("❌ JSONまたは日付変換に失敗しました。以下の出力を確認してください：")
         st.code(json_text)
         raise e
 
@@ -71,7 +84,7 @@ def plot_gantt(df):
     st.pyplot(fig)
 
 # Streamlit UI
-st.title("📤 アップロードされたテキスト → ガントチャート生成アプリ")
+st.title("📤 .txtアップロード → ガントチャート生成")
 
 api_key = st.text_input("🔑 OpenAI APIキーを入力してください", type="password")
 uploaded_file = st.file_uploader("📁 .txtファイルをアップロードしてください", type="txt")
