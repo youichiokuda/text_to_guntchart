@@ -9,27 +9,17 @@ import matplotlib.font_manager as fm
 import os
 import re
 
-# ✅ 日本語フォント設定（自動検出）
-font_candidates = [
-    "/usr/share/fonts/truetype/takao-gothic/TakaoPGothic.ttf",
-    "/usr/share/fonts/opentype/ipafont-gothic/ipagp.ttf",
-    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
-    "/System/Library/Fonts/ヒラギノ角ゴ ProN W3.ttc",  # macOS
-    "/usr/share/fonts/truetype/fonts-japanese-gothic.ttf"
-]
-for font_path in font_candidates:
-    if os.path.exists(font_path):
-        fm.fontManager.addfont(font_path)
-        plt.rcParams["font.family"] = fm.FontProperties(fname=font_path).get_name()
-        break
+# ✅ Takaoフォントを明示的に指定（Docker用）
+font_path = "/usr/share/fonts/truetype/takao-gothic/TakaoPGothic.ttf"
+if os.path.exists(font_path):
+    font_prop = fm.FontProperties(fname=font_path)
+    plt.rcParams["font.family"] = font_prop.get_name()
 else:
     plt.rcParams["font.family"] = "sans-serif"
 
-# JSON形式らしさの確認
 def is_json_like(text):
     return bool(re.match(r'^[\s]*[\[{]', text.strip()))
 
-# ChatGPT API呼び出し
 def extract_tasks_from_text(text, api_key):
     client = OpenAI(api_key=api_key)
     prompt = f"""
@@ -53,7 +43,6 @@ def extract_tasks_from_text(text, api_key):
     )
     return response.choices[0].message.content.strip()
 
-# JSON → DataFrame
 def json_to_df(json_text):
     if not json_text.strip() or not is_json_like(json_text):
         st.error("❌ ChatGPTが有効なJSONを返しませんでした。以下をご確認ください：")
@@ -70,7 +59,6 @@ def json_to_df(json_text):
         st.code(json_text)
         raise e
 
-# ガントチャート表示
 def plot_gantt(df):
     fig, ax = plt.subplots(figsize=(12, 6))
     for i, row in df.iterrows():
