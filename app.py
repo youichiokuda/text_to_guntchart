@@ -1,7 +1,5 @@
 import streamlit as st
 from openai import OpenAI
-import os
-import glob
 import pandas as pd
 import json
 from datetime import datetime
@@ -10,13 +8,15 @@ import matplotlib.dates as mdates
 import matplotlib.font_manager as fm
 import re
 
-# ✅ 日本語フォントを直接指定（Noto Sans CJK JPなどがCloud環境にある場合）
+# ✅ 日本語フォントの設定（クラウドでもできるだけ対応）
 plt.rcParams["font.family"] = "sans-serif"
-plt.rcParams["font.sans-serif"] = ["Noto Sans CJK JP", "IPAexGothic", "TakaoGothic", "Hiragino Maru Gothic Pro", "Arial Unicode MS", "sans-serif"]
+plt.rcParams["font.sans-serif"] = ["Noto Sans CJK JP", "IPAexGothic", "Arial Unicode MS", "sans-serif"]
 
+# JSON形式チェック
 def is_json_like(text):
     return bool(re.match(r'^\s*[\[{]', text.strip()))
 
+# ChatGPT API 呼び出し
 def extract_tasks_from_text(text, api_key):
     client = OpenAI(api_key=api_key)
     prompt = f"""
@@ -40,18 +40,7 @@ def extract_tasks_from_text(text, api_key):
     )
     return response.choices[0].message.content.strip()
 
-def read_texts(folder_path):
-    files = glob.glob(os.path.join(folder_path, "*.txt"))
-    texts = []
-    st.subheader("📂 読み込んだファイル一覧と内容")
-    for f in files:
-        st.markdown(f"✅ **{os.path.basename(f)}**")
-        with open(f, "r", encoding="utf-8") as file:
-            content = file.read()
-            st.code(content, language="text")
-            texts.append(content)
-    return "\n".join(texts)
-
+# JSON→DataFrame変換
 def json_to_df(json_text):
     if not json_text.strip() or not is_json_like(json_text):
         st.error("❌ ChatGPTが有効なJSONを返しませんでした。以下をご確認ください：")
@@ -64,10 +53,11 @@ def json_to_df(json_text):
         df['end'] = pd.to_datetime(df['end'], format="%Y-%m-%d")
         return df
     except Exception as e:
-        st.error("❌ JSONまたは日付変換に失敗しました。以下の出力を確認してください：")
+        st.error("❌ JSONまたは日付変換に失敗しました。以下をご確認ください：")
         st.code(json_text)
         raise e
 
+# ガントチャート表示
 def plot_gantt(df):
     fig, ax = plt.subplots(figsize=(12, 6))
     for i, row in df.iterrows():
@@ -81,32 +71,30 @@ def plot_gantt(df):
     st.pyplot(fig)
 
 # Streamlit UI
-st.title("📅 自然文ファイル → ガントチャート生成アプリ")
+st.title("📤 アップロードされたテキスト → ガントチャート生成アプリ")
 
-folder_path = st.text_input("📁 フォルダパスを入力してください", value="./taskfiles")
-api_key = st.text_input("🔑 OpenAI APIキー", type="password")
+api_key = st.text_input("🔑 OpenAI APIキーを入力してください", type="password")
+uploaded_file = st.file_uploader("📁 .txtファイルをアップロードしてください", type="txt")
 
-if folder_path and api_key:
+if uploaded_file and api_key:
     try:
-        with st.spinner("ファイル読み込み中..."):
-            text = read_texts(folder_path)
-        st.success("✅ ファイル読み込み完了")
+        text = uploaded_file.read().decode("utf-8")
+        st.success("✅ ファイル読み込み成功")
+        st.subheader("📄 アップロード内容")
+        st.text(text[:1000] + ("..." if len(text) > 1000 else ""))
 
-        if not text.strip():
-            st.warning("⚠️ 読み込まれたテキストが空です。内容をご確認ください。")
-        else:
-            if st.button("🚀 ChatGPTで解析してガントチャート生成"):
-                with st.spinner("ChatGPTで解析中..."):
-                    json_text = extract_tasks_from_text(text, api_key)
-                    df = json_to_df(json_text)
+        if st.button("🚀 ChatGPTで解析してガントチャート生成"):
+            with st.spinner("ChatGPTで解析中..."):
+                json_text = extract_tasks_from_text(text, api_key)
+                df = json_to_df(json_text)
 
-                if not df.empty:
-                    st.success("✅ ガントチャート生成完了！")
-                    st.subheader("📋 抽出されたタスク一覧")
-                    st.dataframe(df)
+            if not df.empty:
+                st.success("✅ ガントチャート生成完了！")
+                st.subheader("📋 抽出されたタスク一覧")
+                st.dataframe(df)
 
-                    st.subheader("📈 ガントチャート")
-                    plot_gantt(df)
+                st.subheader("📈 ガントチャート")
+                plot_gantt(df)
 
     except Exception as e:
         st.error(f"❌ エラーが発生しました: {e}")
