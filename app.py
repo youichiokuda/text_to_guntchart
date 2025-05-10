@@ -7,19 +7,21 @@ import json
 from datetime import datetime
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-import japanize_matplotlib
+import matplotlib.font_manager as fm
 import re
 
-# JSON形式らしさを確認
+# ✅ 日本語フォントを直接指定（Noto Sans CJK JPなどがCloud環境にある場合）
+plt.rcParams["font.family"] = "sans-serif"
+plt.rcParams["font.sans-serif"] = ["Noto Sans CJK JP", "IPAexGothic", "TakaoGothic", "Hiragino Maru Gothic Pro", "Arial Unicode MS", "sans-serif"]
+
 def is_json_like(text):
     return bool(re.match(r'^\s*[\[{]', text.strip()))
 
-# ChatGPT API 呼び出し
 def extract_tasks_from_text(text, api_key):
     client = OpenAI(api_key=api_key)
     prompt = f"""
-以下のテキストからプロジェクトのタスクと期間（開始日・終了日）を抽出し、実データ入りのJSONだけを返してください。
-説明文やテンプレート形式は不要です。形式例：
+以下のテキストからプロジェクトのタスクとその期間（開始日・終了日）を抽出してください。
+出力は以下のような JSON 形式で返してください（説明不要）：
 
 [
   {{"task": "ネットワーク設計", "start": "2025-06-01", "end": "2025-06-15"}},
@@ -38,11 +40,8 @@ def extract_tasks_from_text(text, api_key):
     )
     return response.choices[0].message.content.strip()
 
-# サブフォルダ taskfiles からの読み込み
 def read_texts(folder_path):
     files = glob.glob(os.path.join(folder_path, "*.txt"))
-    if not files:
-        st.warning("⚠️ 指定フォルダに .txt ファイルが見つかりませんでした。")
     texts = []
     st.subheader("📂 読み込んだファイル一覧と内容")
     for f in files:
@@ -53,7 +52,6 @@ def read_texts(folder_path):
             texts.append(content)
     return "\n".join(texts)
 
-# JSON→DataFrame変換
 def json_to_df(json_text):
     if not json_text.strip() or not is_json_like(json_text):
         st.error("❌ ChatGPTが有効なJSONを返しませんでした。以下をご確認ください：")
@@ -66,11 +64,10 @@ def json_to_df(json_text):
         df['end'] = pd.to_datetime(df['end'], format="%Y-%m-%d")
         return df
     except Exception as e:
-        st.error("❌ JSONまたは日付変換に失敗しました。以下をご確認ください：")
+        st.error("❌ JSONまたは日付変換に失敗しました。以下の出力を確認してください：")
         st.code(json_text)
         raise e
 
-# ガントチャート描画
 def plot_gantt(df):
     fig, ax = plt.subplots(figsize=(12, 6))
     for i, row in df.iterrows():
@@ -85,9 +82,7 @@ def plot_gantt(df):
 
 # Streamlit UI
 st.title("📅 自然文ファイル → ガントチャート生成アプリ")
-st.markdown("taskfiles/ フォルダ内の .txt ファイルを読み込み、ChatGPTでガントチャートを生成します。")
 
-# フォルダの初期値を taskfiles に
 folder_path = st.text_input("📁 フォルダパスを入力してください", value="./taskfiles")
 api_key = st.text_input("🔑 OpenAI APIキー", type="password")
 
