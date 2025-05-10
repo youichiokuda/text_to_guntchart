@@ -9,11 +9,11 @@ import matplotlib.font_manager as fm
 import os
 import re
 
-# ✅ システム内にある日本語フォント候補を明示探索
+# ✅ システム内にある日本語フォント候補を探索
 font_candidates = [
-    "/usr/share/fonts/opentype/ipafont-gothic/ipagp.ttf",           # IPAゴシック
-    "/usr/share/fonts/truetype/takao-gothic/TakaoPGothic.ttf",      # Takao
-    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",       # Noto Sans
+    "/usr/share/fonts/opentype/ipafont-gothic/ipagp.ttf",
+    "/usr/share/fonts/truetype/takao-gothic/TakaoPGothic.ttf",
+    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
 ]
 for font_path in font_candidates:
     if os.path.exists(font_path):
@@ -21,7 +21,7 @@ for font_path in font_candidates:
         plt.rcParams["font.family"] = font_prop.get_name()
         break
 else:
-    plt.rcParams["font.family"] = "sans-serif"  # fallback
+    plt.rcParams["font.family"] = "sans-serif"
 
 def is_json_like(text):
     return bool(re.match(r'^[\s]*[\[{]', text.strip()))
@@ -76,7 +76,10 @@ def plot_gantt(df, title):
     ax.xaxis.tick_top()
     ax.xaxis.set_label_position('top')
     plt.xticks(rotation=45)
-    ax.grid(True, axis='x', linestyle='--', alpha=0.5)
+
+    # ✅ 横線・縦線のグリッド表示
+    ax.grid(True, axis='both', linestyle='--', alpha=0.5)
+
     plt.title(title, y=1.1)
     plt.tight_layout()
     st.pyplot(fig)
