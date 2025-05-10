@@ -9,13 +9,19 @@ import matplotlib.font_manager as fm
 import os
 import re
 
-# ✅ 同フォルダ内の NotoSerifJP-Bold.ttf を明示指定
-font_path = "NotoSerifJP-Bold.ttf"
-if os.path.exists(font_path):
-    font_prop = fm.FontProperties(fname=font_path)
-    plt.rcParams["font.family"] = font_prop.get_name()
+# ✅ システム内にある日本語フォント候補を明示探索
+font_candidates = [
+    "/usr/share/fonts/opentype/ipafont-gothic/ipagp.ttf",           # IPAゴシック
+    "/usr/share/fonts/truetype/takao-gothic/TakaoPGothic.ttf",      # Takao
+    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",       # Noto Sans
+]
+for font_path in font_candidates:
+    if os.path.exists(font_path):
+        font_prop = fm.FontProperties(fname=font_path)
+        plt.rcParams["font.family"] = font_prop.get_name()
+        break
 else:
-    plt.rcParams["font.family"] = "sans-serif"
+    plt.rcParams["font.family"] = "sans-serif"  # fallback
 
 def is_json_like(text):
     return bool(re.match(r'^[\s]*[\[{]', text.strip()))
@@ -60,7 +66,7 @@ def json_to_df(json_text):
         raise e
 
 def plot_gantt(df, title):
-    df = df.sort_values("start", ascending=False)  # 一番古いものが上に
+    df = df.sort_values("start", ascending=False)
     fig, ax = plt.subplots(figsize=(12, 6))
     for i, row in df.iterrows():
         ax.barh(row['task'], (row['end'] - row['start']).days, left=row['start'], height=0.5)

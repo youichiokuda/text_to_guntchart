@@ -1,8 +1,12 @@
 FROM python:3.10-slim
 
-# フォントキャッシュなどに必要なツールのみ（フォントはローカルに含む）
-RUN apt-get update && apt-get install -y fontconfig && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+# 日本語フォントをインストール（Takao + IPA）
+RUN apt-get update && apt-get install -y \
+    fonts-takao \
+    fonts-ipafont-gothic \
+    fonts-noto-cjk \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY . /app
