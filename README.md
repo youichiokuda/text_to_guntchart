@@ -65,6 +65,13 @@ docker run -p 8501:8501 gantt-chart-app
 
 ---
 
+##画面サンプル
+
+![スクリーンショット 2025-05-11 0 37 22](https://github.com/user-attachments/assets/92d7cd0f-443f-4b8d-8196-9b0826fbcf8a)
+![スクリーンショット 2025-05-11 0 37 50](https://github.com/user-attachments/assets/2f38acf7-dee2-4d86-9fad-fde69d8d69ca)
+![スクリーンショット 2025-05-11 0 38 13](https://github.com/user-attachments/assets/2ed8cceb-432f-43a0-b7f9-096fc732b030)
+
+
 ## 🔤 日本語フォントについて（Docker）
 
 このアプリはDocker内で以下のフォントをインストールして使用します：
