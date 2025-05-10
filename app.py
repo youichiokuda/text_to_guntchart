@@ -9,19 +9,17 @@ import matplotlib.font_manager as fm
 import os
 import re
 
-# ✅ 日本語フォントの明示指定（Docker環境用）
-font_path = "/usr/share/fonts/truetype/takao-gothic/TakaoPGothic.ttf"
+# ✅ 同フォルダ内のフォントファイルを明示指定
+font_path = os.path.join(os.path.dirname(__file__), "NotoSerifJP-Bold.ttf")
 if os.path.exists(font_path):
     font_prop = fm.FontProperties(fname=font_path)
     plt.rcParams["font.family"] = font_prop.get_name()
 else:
     plt.rcParams["font.family"] = "sans-serif"
 
-# JSONらしさ判定
 def is_json_like(text):
     return bool(re.match(r'^[\s]*[\[{]', text.strip()))
 
-# OpenAIでタスク抽出
 def extract_tasks_from_text(text, api_key):
     client = OpenAI(api_key=api_key)
     prompt = f"""
@@ -45,7 +43,6 @@ def extract_tasks_from_text(text, api_key):
     )
     return response.choices[0].message.content.strip()
 
-# JSONをDataFrameに変換
 def json_to_df(json_text):
     if not json_text.strip() or not is_json_like(json_text):
         st.error("❌ ChatGPTが有効なJSONを返しませんでした。以下をご確認ください：")
@@ -62,9 +59,8 @@ def json_to_df(json_text):
         st.code(json_text)
         raise e
 
-# ガントチャート描画
 def plot_gantt(df, title):
-    df = df.sort_values("start")  # 古い順にソート
+    df = df.sort_values("start")  # 古い順に並び替え
     fig, ax = plt.subplots(figsize=(12, 6))
     for i, row in df.iterrows():
         ax.barh(row['task'], (row['end'] - row['start']).days, left=row['start'], height=0.5)
@@ -89,7 +85,6 @@ if uploaded_file and api_key:
         st.subheader("📄 アップロード内容")
         st.text(text[:1000] + ("..." if len(text) > 1000 else ""))
 
-        # ✅ ガントチャートタイトル入力
         chart_title = st.text_input("📌 ガントチャートのタイトル", value="自然文から生成されたガントチャート")
 
         if st.button("🚀 ChatGPTで解析してガントチャート生成"):
