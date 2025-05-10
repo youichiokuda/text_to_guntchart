@@ -1,91 +1,87 @@
-# 📅 Streamlit + ChatGPT 自然文 → ガントチャート アプリ
+# 📅 自然文 → ガントチャート生成アプリ（Streamlit + OpenAI）
 
-このアプリは、自然文（例：「5月1日から15日はキックオフ」など）を書いた `.txt` ファイルを読み込み、OpenAI GPT-4o-mini によって解析し、タスクの期間を抽出してガントチャートを描画します。
-
----
-
-## ✅ フォルダ構成（Streamlit Cloud 対応）
-
-```
-guntchartmake3/
-├── app.py                 # Streamlit アプリ本体
-├── requirements.txt       # ライブラリ定義
-├── taskfiles/             # ✅ .txtファイルをここに入れる
-│   └── sample_task.txt
-```
+このアプリは、自然文で記述された `.txt` ファイルをアップロードし、OpenAI (gpt-4o-mini) を使ってプロジェクトのタスクと期間を抽出し、ガントチャートを自動生成します。
 
 ---
 
-## 🚀 デプロイ方法（Streamlit Cloud）
+## ✅ 特徴
 
-1. GitHub にこのプロジェクトを push
-2. https://streamlit.io/cloud にログイン
-3. 「New App」→ リポジトリを選択
-4. アプリファイル: `app.py`
-5. ブランチ名: `main`（例）
-6. 「Deploy」
+- `.txt` ファイルをアップロードするだけでOK（フォルダパス不要）
+- 日本語の自然文をChatGPTで解析し、JSON形式で期間付きタスクに変換
+- `matplotlib` で日本語対応のガントチャートを描画
+- Dockerでローカル環境構築も可能（日本語フォントを自動インストール）
 
 ---
 
-## 📂 📥 フォルダパスの入力方法（重要）
-
-アプリの実行画面で「📁 フォルダパスを入力してください」という欄には、次のように入力します：
+## 📂 フォルダ構成
 
 ```
-taskfiles
+guntchartmake_app/
+├── app.py               # Streamlit アプリ本体（アップロード式）
+├── requirements.txt     # Pythonライブラリ
+├── Dockerfile           # 日本語フォントありDocker構成
+└── sample_task.txt      # （任意）アップロード用テキストサンプル
 ```
-
-または
-
-```
-./taskfiles
-```
-
-どちらでもOKです（カレントディレクトリからの相対パス）。**絶対パス（/Users/〜）は使用できません。**
 
 ---
 
-## 🔐 OpenAI APIキーについて
+## 🚀 実行方法
 
-Streamlitアプリ実行時に入力欄に貼り付ける形式になっています。  
-環境変数や secrets.toml を使いたい場合は別途設定が必要です。
+### 🔸 1. OpenAI APIキーの取得
+
+- https://platform.openai.com/account/api-keys から新規作成
+- `sk-...` で始まるキーをアプリ画面の入力欄に貼り付け
+
+### 🔸 2. Dockerでローカル実行（推奨）
+
+```bash
+docker build -t gantt-chart-app .
+docker run -p 8501:8501 gantt-chart-app
+```
+
+起動後、`http://localhost:8501` にアクセス。
 
 ---
 
-## ✏️ sample_task.txt の例
+## 📤 入力方法
+
+- アプリ画面で `.txt` ファイルをアップロード
+- 例：
 
 ```
 5月1日から15日まではキックオフ準備を行う。
 6月にネットワーク要件を固める。
 10月に院内ネットワークの発注、
-11月にクラウドと電子カルテの発注を予定。
-12月〜1月に工事、5月に完全移行。
+11月にクラウドと電子カルテの発注を予定している。
 ```
 
 ---
 
-## 🖼️ 出力
+## 📈 出力
 
-- 📋 タスク一覧表（DataFrame形式）
-- 📈 ガントチャート（Matplotlib）
+- 📋 タスク一覧（表形式）
+- 📅 ガントチャート（日本語ラベル表示OK）
 
 ---
 
-## 💡 ローカルで動かす場合
+## 🔤 日本語フォントについて（Docker）
 
-```bash
-pip install -r requirements.txt
-streamlit run app.py
-```
+このアプリはDocker内で以下の日本語フォントを自動インストールします：
 
-その際、読み込みフォルダに以下のような絶対パスも使用可能：
+- `fonts-takao`
+- `fonts-ipafont-gothic`
 
-```
-/Users/yourname/Downloads/guntchartmake3/taskfiles
-```
+さらに `app.py` 側で `TakaoPGothic.ttf` を明示指定しており、`matplotlib` での日本語文字化けを防止しています。
+
+---
+
+## 💬 注意事項
+
+- モデルは `gpt-4o-mini` を使用します（無料アカウントでは利用不可）
+- APIキーは **絶対にGitHub等に公開しないよう注意してください**
 
 ---
 
 ## 🙌 お問い合わせ
 
-フィードバック歓迎です！
+ご質問・改善提案などありましたら、お気軽にどうぞ。
